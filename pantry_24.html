@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Pantry</title>
+<meta name="app-version" content="1.1">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f2f4f0;
+    --warm-white: #f7f9f6;
+    --brown: #3a4a5c;
+    --brown-mid: #5a7a8a;
+    --brown-light: #7a9aaa;
+    --accent: #e8748a;
+    --accent-light: #f7c4ce;
+    --green: #5a8a6a;
+    --green-light: #c8e0d0;
+    --red-light: #fce8ec;
+    --red: #c45a6a;
+    --border: #d8e4dc;
+    --shadow: rgba(58,74,92,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--brown);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    background: var(--brown);
+    padding: 16px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+  }
+  header .icon { font-size: 22px; }
+  .item-count {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: var(--brown);
+    padding: 0 20px 12px;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--accent-light);
+    background: rgba(255,255,255,0.08);
+  }
+  .tab.active {
+    background: var(--cream);
+    color: var(--brown);
+  }
+
+  /* Views */
+  .view { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .view.active { display: flex; }
+
+  /* ── CHAT VIEW ── */
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    scroll-behavior: smooth;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 11px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--brown);
+    color: var(--cream);
+    border-bottom-right-radius: 4px;
+  }
+  .msg.assistant {
+    align-self: flex-start;
+    background: white;
+    color: var(--brown);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+  .msg.thinking {
+    align-self: flex-start;
+    background: white;
+    color: var(--brown-light);
+    font-style: italic;
+    font-size: 13px;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+
+  .suggestions {
+    padding: 0 16px 8px;
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex-shrink: 0;
+  }
+  .suggestions::-webkit-scrollbar { display: none; }
+  .suggestion-chip {
+    white-space: nowrap;
+    padding: 7px 13px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--brown-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .suggestion-chip:active { background: var(--accent-light); border-color: var(--accent); }
+
+  .chat-input-row {
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    background: var(--warm-white);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .chat-input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: white;
+    color: var(--brown);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .send-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: none;
+    background: var(--brown);
+    color: var(--cream);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .send-btn:active { background: var(--accent); }
+
+  /* ── INVENTORY VIEW ── */
+  .inventory-toolbar {
+    padding: 12px 16px;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--warm-white);
+    border-bottom: 1px solid var(--border);
+  }
+  .search-input {
+    flex: 1;
+    padding: 9px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: white;
+    color: var(--brown);
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .add-btn {
+    padding: 9px 16px;
+    border: none;
+    border-radius: 20px;
+    background: var(--accent);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .category-group { margin-bottom: 4px; }
+  .category-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    padding: 10px 16px 4px;
+  }
+
+  .item-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 16px;
+  }
+
+  .pantry-item {
+    display: flex;
+    align-items: center;
+    padding: 11px 16px;
+    gap: 12px;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .pantry-item:first-child { border-top: 1px solid var(--border); }
+  .item-emoji { font-size: 20px; width: 28px; text-align: center; }
+  .item-info { flex: 1; }
+  .item-name { font-size: 14px; font-weight: 500; color: var(--brown); }
+  .item-qty { font-size: 12px; color: var(--brown-light); margin-top: 1px; }
+  .item-actions { display: flex; gap: 6px; }
+  .qty-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--warm-white);
+    color: var(--brown-mid);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .qty-btn:active { background: var(--accent-light); border-color: var(--accent); }
+  .qty-display {
+    width: 28px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--brown);
+    line-height: 28px;
+  }
+  .delete-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--brown-light);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.5;
+  }
+  .delete-btn:active { opacity: 1; color: var(--red); }
+
+  /* Add item modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--warm-white);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px 36px;
+    width: 100%;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--brown);
+  }
+  .modal-field { margin-bottom: 12px; }
+  .modal-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--brown-light);
+    margin-bottom: 5px;
+  }
+  .modal-field input, .modal-field select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    background: white;
+    color: var(--brown);
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+  .modal-cancel {
+    flex: 1; padding: 13px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    background: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--brown-mid);
+    cursor: pointer;
+  }
+  .modal-save {
+    flex: 2; padding: 13px;
+    border: none;
+    border-radius: 12px;
+    background: var(--brown);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--brown-light);
+  }
+  .empty-state .big { font-size: 40px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  .edit-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--brown-light);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.5;
+  }
+  .edit-btn:active { opacity: 1; color: var(--accent); }
+
+  .progress-bar-wrap {
+    width: 100%; height: 6px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 10px;
+    transition: width 0.3s ease;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="icon">🍱</span>
+  <h1>Pantry</h1>
+  <span class="item-count" id="itemCount">0 items</span>
+  <button onclick="document.getElementById('keyModalOverlay').classList.add('open')" style="background:none;border:none;color:var(--accent-light);font-size:16px;cursor:pointer;margin-left:4px;" title="API Key Settings">⚙️</button>
+  <span id="syncStatus" style="font-size:11px;color:var(--accent-light);margin-left:8px;transition:opacity 1s;"></span>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('chat')">💬 Ask</button>
+  <button class="tab" onclick="switchTab('inventory')">📦 Inventory</button>
+  <button class="tab" onclick="switchTab('receipt')">📷 Receipt</button>
+</div>
+
+<!-- CHAT VIEW -->
+<div class="view active" id="chatView">
+  <div class="messages" id="messages">
+    <div class="msg assistant">Hey! Ask me what's in the pantry, or tell me what you've used up and I'll keep track. 🥫</div>
+  </div>
+  <div class="suggestions">
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">Do we have pasta?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">What's in the freezer?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">We used the last of the eggs</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">What spices do we have?</button>
+    <button class="suggestion-chip" onclick="sendSuggestion(this)">What's running low?</button>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chatInput" type="text" placeholder="Ask about your pantry…" autocomplete="off" />
+    <button class="send-btn" onclick="sendMessage()">↑</button>
+  </div>
+</div>
+
+<!-- INVENTORY VIEW -->
+<div class="view" id="inventoryView">
+  <div class="inventory-toolbar">
+    <input class="search-input" id="searchInput" type="text" placeholder="🔍  Search pantry…" oninput="renderInventory()" />
+    <button class="add-btn" onclick="verifyAllItems()" style="background:var(--green);" title="Mark all items as verified today">✓ Verify All</button>
+    <button class="add-btn" onclick="loadItems()" style="background:var(--brown-mid);">↻</button>
+    <button class="add-btn" onclick="openModal()">+ Add</button>
+  </div>
+  <div class="item-list" id="itemList"></div>
+</div>
+
+<!-- RECEIPT VIEW -->
+<div class="view" id="receiptView">
+  <div style="padding:20px;flex:1;overflow-y:auto;">
+    <p style="font-size:13px;color:var(--brown-light);margin-bottom:16px;line-height:1.6;">Take a photo of your receipt or upload one. Claude will read it and show you what it found before adding anything to your pantry.</p>
+    <label id="receiptUploadLabel" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:2px dashed var(--border);border-radius:16px;padding:32px 20px;cursor:pointer;background:white;transition:border-color 0.2s;">
+      <span style="font-size:40px;">📷</span>
+      <span style="font-size:14px;font-weight:500;color:var(--brown);">Tap to take photo or upload</span>
+      <span style="font-size:12px;color:var(--brown-light);">Supports JPG, PNG, HEIC</span>
+      <input type="file" id="receiptInput" accept="image/*" capture="environment" style="display:none" onchange="handleReceiptUpload(event)" />
+    </label>
+    <div id="receiptPreview" style="display:none;margin-top:16px;">
+      <img id="receiptImg" style="width:100%;border-radius:12px;max-height:200px;object-fit:cover;" />
+    </div>
+    <div id="receiptStatus" style="margin-top:16px;font-size:13px;color:var(--brown-light);text-align:center;"></div>
+    <div id="receiptProgressWrap" class="progress-bar-wrap" style="display:none;"><div id="receiptProgressFill" class="progress-bar-fill" style="width:0%"></div></div>
+    <div id="receiptItems" style="margin-top:12px;display:none;">
+      <p style="font-size:12px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--brown-light);margin-bottom:8px;">Found these items — uncheck any you don't want to add:</p>
+      <div id="receiptItemList"></div>
+      <div style="display:flex;gap:10px;margin-top:16px;">
+        <button onclick="cancelReceipt()" style="flex:1;padding:13px;border:1.5px solid var(--border);border-radius:12px;background:none;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--brown-mid);cursor:pointer;">Cancel</button>
+        <button onclick="preConfirmReceipt()" style="flex:2;padding:13px;border:none;border-radius:12px;background:var(--brown);color:var(--cream);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;">Add to Pantry</button>
+      </div>
+    </div>
+  <div id="receiptLog" style="padding:0 0 16px;display:none;"></div>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <h3>Add to Pantry</h3>
+    <div class="modal-field">
+      <label>Item name</label>
+      <input type="text" id="newName" placeholder="e.g. Olive oil" />
+    </div>
+    <div class="modal-field">
+      <label>Quantity</label>
+      <input type="number" id="newQty" value="1" min="1" />
+    </div>
+    <div class="modal-field">
+      <label>Unit (optional)</label>
+      <input type="text" id="newUnit" placeholder="e.g. cans, bottles, bags" />
+    </div>
+    <div class="modal-field">
+      <label>Category</label>
+      <select id="newCategory">
+        <option>🥫 Pantry Essentials</option>
+        <option>🥫 Canned Goods</option>
+        <option>🫙 Sauces</option>
+        <option>🍶 Vinegars</option>
+        <option>🫘 Beans & Legumes</option>
+        <option>🌾 Grains</option>
+        <option>🌾 Flour</option>
+        <option>🍫 Sweets & Baking</option>
+        <option>🧂 Spices & Seasonings</option>
+        <option>🧊 Freezer</option>
+        <option>📦 Other</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save" onclick="saveItem()">Add to Pantry</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT ITEM MODAL -->
+<div class="modal-overlay" id="editModalOverlay" onclick="closeEditModal(event)">
+  <div class="modal">
+    <h3>Edit Item</h3>
+    <input type="hidden" id="editId" />
+    <div class="modal-field">
+      <label>Item name</label>
+      <input type="text" id="editName" placeholder="e.g. Olive oil" />
+    </div>
+    <div class="modal-field">
+      <label>Quantity</label>
+      <input type="number" id="editQty" value="1" min="0" />
+    </div>
+    <div class="modal-field">
+      <label>Unit (optional)</label>
+      <input type="text" id="editUnit" placeholder="e.g. cans, bottles, bags" />
+    </div>
+    <div class="modal-field">
+      <label>Category</label>
+      <select id="editCategory">
+        <option>🥫 Pantry Essentials</option>
+        <option>🥫 Canned Goods</option>
+        <option>🫙 Sauces</option>
+        <option>🍶 Vinegars</option>
+        <option>🫘 Beans & Legumes</option>
+        <option>🌾 Grains</option>
+        <option>🌾 Flour</option>
+        <option>🍫 Sweets & Baking</option>
+        <option>🧂 Spices & Seasonings</option>
+        <option>🧊 Freezer</option>
+        <option>📦 Other</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
+      <button class="modal-save" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="keyModalOverlay">
+  <div class="modal">
+    <h3>One quick setup step 🧺</h3>
+    <p style="font-size:13px;color:var(--brown-light);margin-bottom:12px;line-height:1.6;">The chat and receipt scanner are powered by AI. To use them, you need a free access code called an API key.</p>
+    <p style="font-size:13px;color:var(--brown-light);margin-bottom:16px;line-height:1.6;">👉🏼 Ask Ezra to send you the key, then paste it below. You only need to do this once.</p>
+    <div class="modal-field">
+      <label>Paste your access key here</label>
+      <input type="password" id="apiKeyInput" placeholder="Starts with sk-ant-..." style="font-family:monospace;font-size:12px;" />
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeKeyModal()">Skip for now</button>
+      <button class="modal-save" onclick="saveApiKey()">Save & Continue</button>
+    </div>
+  </div>
+</div>
+<script>
+const API_URL = 'https://api.anthropic.com/v1/messages';
+let ANTHROPIC_KEY = localStorage.getItem('pantry_anthropic_key') || '';
+const SUPABASE_URL = 'https://pibqgzfgwnroohslrmjo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_eDL_8w55TIO_JG5axY73GA_pIgVlhGo';
+const SB_HEADERS = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`
+};
+
+let items = [];
+
+function showSyncStatus(msg, color) {
+  let el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = color || 'var(--brown-light)';
+  el.style.opacity = '1';
+  if (msg) setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+async function loadItems() {
+  showSyncStatus('Syncing…');
+  const wakeTimer = setTimeout(() => {
+    showSyncStatus('Waking up database… (may take ~15s)', 'var(--brown-light)');
+  }, 2000);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/Pantry?select=*&order=category,name`, {
+      headers: SB_HEADERS
+    });
+    clearTimeout(wakeTimer);
+    if (!res.ok) throw new Error(await res.text());
+    const raw = await res.json();
+    items = raw.map(r => ({
+      id: r.id,
+      name: r.name || '',
+      qty: r.qty || 0,
+      unit: r.unit || '',
+      category: r.category || '📦 Other',
+      last_updated: r.last_updated || null
+    }));
+    showSyncStatus('Synced ✓', 'var(--green)');
+  } catch(e) {
+    clearTimeout(wakeTimer);
+    showSyncStatus('Sync error', 'var(--red)');
+    console.error(e);
+  }
+  updateCount();
+  renderInventory();
+}
+
+async function addItemToDb(item) {
+  const { name, qty, unit, category } = item;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/Pantry`, {
+    method: 'POST',
+    headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ name, qty, unit, category, last_updated: new Date().toISOString() })
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return (await res.json())[0];
+}
+
+async function updateItemInDb(id, fields) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/Pantry?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify({ ...fields, last_updated: new Date().toISOString() })
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+async function deleteItemFromDb(id) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/Pantry?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: SB_HEADERS
+  });
+  if (!res.ok) throw new Error(await res.text());
+}
+
+async function saveItems() {
+  updateCount();
+  renderInventory();
+}
+
+function updateCount() {
+  document.getElementById('itemCount').textContent = `${items.length} item${items.length !== 1 ? 's' : ''}`;
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['chat', 'inventory', 'receipt'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.getElementById('chatView').classList.toggle('active', tab === 'chat');
+  document.getElementById('inventoryView').classList.toggle('active', tab === 'inventory');
+  document.getElementById('receiptView').classList.toggle('active', tab === 'receipt');
+  if (tab === 'inventory') renderInventory();
+  if (tab !== 'receipt') {
+    // Reset receipt state when leaving tab
+    document.getElementById('receiptInput').value = '';
+    document.getElementById('receiptPreview').style.display = 'none';
+    document.getElementById('receiptItems').style.display = 'none';
+    document.getElementById('receiptStatus').textContent = '';
+    receiptParsedItems = [];
+  }
+}
+
+// ── CHAT ──
+const chatHistory = [];
+
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+function sendSuggestion(btn) {
+  document.getElementById('chatInput').value = btn.textContent;
+  sendMessage();
+}
+
+function renderMarkdown(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function addMsg(text, role) {
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (role === 'assistant') {
+    div.innerHTML = renderMarkdown(text);
+  } else {
+    div.textContent = text;
+  }
+  document.getElementById('messages').appendChild(div);
+  document.getElementById('messages').scrollTop = 99999;
+  return div;
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  addMsg(text, 'user');
+  chatHistory.push({ role: 'user', content: text });
+  if (chatHistory.length > 10) chatHistory.splice(0, chatHistory.length - 10);
+
+  const thinking = addMsg('Checking the pantry…', 'thinking');
+
+  await loadItems();
+
+  // Smart pantry snapshot - only send relevant sections based on query
+  const query = text.toLowerCase();
+  const isAbout = (keywords) => keywords.some(k => query.includes(k));
+  // Broad queries about cooking/meals get the full list
+  const isBroadQuery = isAbout(['make', 'cook', 'dinner', 'lunch', 'breakfast', 'recipe', 'meal', 'dish', 'eat', 'stir fry', 'stir-fry', 'what do we have', 'what can', 'everything', 'all', 'full list', 'show me', 'do we have', 'do you have', 'is there', 'have any', 'got any', 'we have']);
+  let relevantItems = items;
+  if (!isBroadQuery) {
+    if (isAbout(['spice', 'seasoning', 'herb', 'salt', 'pepper', 'cumin', 'turmeric', 'curry', 'paprika', 'cinnamon', 'oregano', 'basil', 'thyme'])) {
+      relevantItems = items.filter(i => i.category === '🧂 Spices & Seasonings');
+    } else if (isAbout(['sauce', 'soy', 'hot sauce', 'sriracha', 'ketchup', 'mayo', 'mustard', 'fish sauce', 'oyster', 'hoisin', 'teriyaki'])) {
+      relevantItems = items.filter(i => ['🫙 Sauces', '🥫 Pantry Essentials'].includes(i.category));
+    } else if (isAbout(['vinegar', 'balsamic', 'apple cider', 'rice vinegar'])) {
+      relevantItems = items.filter(i => i.category === '🍶 Vinegars');
+    } else if (isAbout(['grain', 'rice', 'pasta', 'oat', 'barley', 'millet', 'bulgur', 'polenta', 'quinoa', 'flour', 'bread'])) {
+      relevantItems = items.filter(i => ['🌾 Grains', '🌾 Flour'].includes(i.category));
+    } else if (isAbout(['bean', 'lentil', 'chickpea', 'chana', 'legume', 'dal', 'pea'])) {
+      relevantItems = items.filter(i => i.category === '🫘 Beans & Legumes');
+    } else if (isAbout(['can', 'canned', 'tuna', 'salmon', 'coconut milk'])) {
+      relevantItems = items.filter(i => i.category === '🥫 Canned Goods');
+    } else if (isAbout(['frozen', 'freezer', 'freeze'])) {
+      relevantItems = items.filter(i => i.category === '🧊 Freezer');
+    } else if (isAbout(['sweet', 'baking', 'chocolate', 'sugar', 'cocoa', 'brownie', 'dessert', 'cake'])) {
+      relevantItems = items.filter(i => i.category === '🍫 Sweets & Baking');
+    }
+    // If filtered results are very small, fall back to full list
+    if (relevantItems.length < 3) relevantItems = items;
+  }
+
+  const pantrySnapshot = relevantItems.map(i =>
+    \`- \${i.name}: \${i.qty}\${i.unit ? ' ' + i.unit : ''} (\${i.category})\`
+  ).join('\n');
+
+  const systemPrompt = \`You are a friendly pantry assistant. You help users check what's in their pantry and update it.
+
+Current pantry contents (relevant section):
+\${pantrySnapshot || '(empty)'}
+
+When the user asks if something is in the pantry, check the list and answer naturally.
+
+QUANTITY RULE: If the user mentions getting/buying/adding items without specifying quantities, ALWAYS ask how many before adding anything. If multiple items are mentioned, list them all and ask once: "How many of each did you get? [item1, item2, item3]". Never guess or assume a quantity.
+
+KEEP SEPARATE RULE: If the user says two items should stay as separate entries (e.g. "keep soy sauce and XO soy sauce separate"), do NOT merge them. Treat them as distinct items.
+
+When the user says they used something or ran out, respond saying you'll update it, and include a JSON update block at the END of your message in this exact format (no extra text after):
+<UPDATE>{"action":"decrement","name":"item name"}</UPDATE>
+or
+<UPDATE>{"action":"remove","name":"item name"}</UPDATE>
+or
+<UPDATE>{"action":"add","name":"item name","qty":1,"unit":"","category":"📦 Other"}</UPDATE>
+
+Categories to use when adding items:
+- "🌾 Grains" for rice, oats, barley, millet, bulgur, polenta, lentils, beans, chana dal, granola
+- "🌾 Flour" for any flour, cornstarch, baking powder, korean pancake powder
+- "🍫 Sweets & Baking" for chocolate, cocoa, sugar, molasses, corn syrup, brownie mix, dulce de leche
+- "🧂 Spices & Seasonings" for spices, herbs, seasonings
+- "🧊 Freezer" for frozen items
+- "🥫 Canned Goods" for anything canned: tuna, salmon, coconut milk, evaporated milk, pigeon peas
+- "🫘 Beans & Legumes" for chickpeas, black beans, chana dal, lentils, pigeon peas (dried or canned)
+- "🫙 Sauces" for sauces, hot sauce, soy sauce, fish sauce, tomato sauce, etc.
+- "🍶 Vinegars" for any vinegar: apple cider, balsamic, rice, white, red wine
+- "🥫 Pantry Essentials" for oils, condiments, nut butters, drinks, and everything else
+
+For "what can I make" style questions, suggest 2-3 meals based on what's available.
+Keep responses short, warm and conversational. Use the pantry list accurately.
+
+IMPORTANT - Semantic matching rules:
+- When someone asks about an ingredient, find ALL related items using your culinary knowledge, not just exact name matches. Examples:
+  - "soy sauce" should match: soy sauce, XO soy sauce, dark soy sauce, tamari, low sodium soy sauce
+  - "hot sauce" should match: hot sauce, sriracha, tabasco, cholula, chili garlic sauce, sambal, harissa
+  - "vinegar" should match: apple cider vinegar, balsamic vinegar, rice vinegar, white vinegar
+  - "oil" should match: olive oil, vegetable oil, sesame oil, coconut oil
+  - "flour" should match: flour, bread flour, tapioca flour, almond flour
+  - "beans" should match: black beans, chickpeas, chana dal, lentils, pigeon peas
+- Always list ALL matching items you find, not just the closest one
+- If the exact item isn't there but related items are, mention both\`;
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    thinking.remove();
+
+    const fullText = data.content?.[0]?.text || "Sorry, I couldn't reach the pantry right now.";
+    
+    // Parse update commands
+    const displayText = fullText.replace(/<UPDATE>[\s\S]*?<\/UPDATE>/g, '').trim();
+
+    addMsg(displayText, 'assistant');
+    chatHistory.push({ role: 'assistant', content: displayText });
+
+    // Handle multiple UPDATE tags
+    const updateRegex = /<UPDATE>([\s\S]*?)<\/UPDATE>/g;
+    let match;
+    const updates = [];
+    while ((match = updateRegex.exec(fullText)) !== null) {
+      try { updates.push(JSON.parse(match[1])); } catch(e) { console.error('Update parse error', e); }
+    }
+    if (updates.length > 0) {
+      const updatingMsg = addMsg(`Updating pantry (0/${updates.length})…`, 'thinking');
+      for (let i = 0; i < updates.length; i++) {
+        updatingMsg.textContent = `Updating pantry (${i+1}/${updates.length})…`;
+        await applyUpdate(updates[i]);
+      }
+      updatingMsg.remove();
+    }
+  } catch(e) {
+    thinking.remove();
+    addMsg("Hmm, couldn't connect. Check your API key is set up.", 'assistant');
+  }
+}
+
+async function applyUpdate(cmd) {
+  try {
+    if (cmd.action === 'decrement') {
+      const item = items.find(i => i.name.toLowerCase() === cmd.name.toLowerCase());
+      if (item) {
+        const newQty = Math.max(0, item.qty - 1);
+        if (newQty === 0) {
+          await deleteItemFromDb(item.id);
+          items = items.filter(i => i.id !== item.id);
+        } else {
+          await updateItemInDb(item.id, { qty: newQty });
+          item.qty = newQty;
+        }
+      }
+    } else if (cmd.action === 'increment') {
+      const item = items.find(i => i.name.toLowerCase() === cmd.name.toLowerCase());
+      if (item) {
+        const newQty = item.qty + (cmd.qty || 1);
+        const cleanUnit = clearLowStockUnit(item.unit);
+        await updateItemInDb(item.id, { qty: newQty, unit: cleanUnit });
+        item.qty = newQty;
+        item.unit = cleanUnit;
+      }
+    } else if (cmd.action === 'remove') {
+      const item = items.find(i => i.name.toLowerCase() === cmd.name.toLowerCase());
+      if (item) {
+        await deleteItemFromDb(item.id);
+        items = items.filter(i => i.id !== item.id);
+      }
+    } else if (cmd.action === 'add') {
+      const unit = await validateUnit(cmd.name, cmd.qty || 1, cmd.unit || '');
+      const newItem = await addItemToDb({ name: cmd.name, qty: cmd.qty || 1, unit, category: cmd.category || '📦 Other' });
+      if (newItem) items.push(newItem);
+    }
+    saveItems();
+  } catch(e) {
+    showSyncStatus('Update failed', 'var(--red)');
+    console.error(e);
+  }
+}
+
+// ── INVENTORY ──
+function renderInventory() {
+  const query = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const filtered = items.filter(i => i.name.toLowerCase().includes(query));
+
+  const grouped = {};
+  filtered.forEach(item => {
+    if (!grouped[item.category]) grouped[item.category] = [];
+    grouped[item.category].push(item);
+  });
+
+  const list = document.getElementById('itemList');
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="big">🧺</div><p>${query ? 'No items match your search.' : 'Your pantry is empty.<br>Add some items to get started!'}</p></div>`;
+    return;
+  }
+
+  list.innerHTML = Object.entries(grouped).sort().map(([cat, catItems]) => `
+    <div class="category-group">
+      <div class="category-label">${cat}</div>
+      ${catItems.map(item => `
+        <div class="pantry-item" id="item-${item.id}">
+          <div class="item-emoji">${categoryEmoji(cat)}</div>
+          <div class="item-info">
+            <div class="item-name">${item.name}</div>
+            <div class="item-qty">${item.qty}${item.unit ? '<span style="margin-left:4px;opacity:0.7">' + item.unit + '</span>' : ''}${item.last_updated ? '<span style="margin-left:8px;opacity:0.45;font-size:11px">' + formatUpdated(item.last_updated) + '</span>' : ''}</div>
+          </div>
+          <div class="item-actions">
+            <button class="qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
+            <div class="qty-display">${item.qty}</div>
+            <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+            <button class="edit-btn" onclick="openEditModal(${item.id})" title="Edit">✎</button>
+            <button class="delete-btn" onclick="deleteItem(${item.id})">✕</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+
+function formatUpdated(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const now = new Date();
+  // Compare calendar dates in local timezone, not UTC
+  const dLocal = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const nowLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round((nowLocal - dLocal) / 86400000);
+  if (diffDays === 0) return 'Updated today';
+  if (diffDays === 1) return 'Updated yesterday';
+  return 'Updated ' + d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function clearLowStockUnit(unit) {
+  if (!unit) return unit;
+  const lowStockPhrases = ['running low', 'very low', 'running very low', 'small amount', 'almost out', 'nearly out', 'low', 'barely any', 'last one', 'almost empty', 'nearly empty'];
+  const u = unit.toLowerCase().trim();
+  if (lowStockPhrases.some(p => u.includes(p))) return '';
+  return unit;
+}
+
+async function validateUnit(name, qty, unit) {
+  if (!unit) return unit;
+  // Don't bother checking clearly normal units
+  const normalUnits = ['bags', 'bag', 'cans', 'can', 'bottles', 'bottle', 'boxes', 'box', 'jars', 'jar', 'containers', 'container', 'tins', 'tin', 'lb', 'lbs', 'g', 'kg', 'oz', 'ml', 'l', 'packs', 'pack', 'bunches', 'bunch', ''];
+  if (normalUnits.includes(unit.toLowerCase().trim())) return unit;
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 50,
+        messages: [{
+          role: 'user',
+          content: `For a pantry item "${name}" with quantity ${qty}, the unit/description is "${unit}". 
+Does this unit still make sense given the quantity? For example, "running low" doesn't make sense if qty is 2+, and "small amount" doesn't make sense if qty is 3.
+Reply with ONLY the corrected unit (e.g. "bottles", "cans", "") or the original if it's fine. No explanation.`
+        }]
+      })
+    });
+    const data = await res.json();
+    const suggested = (data.content?.[0]?.text || unit).trim().replace(/^["']|["']$/g, '');
+    return suggested;
+  } catch(e) {
+    return clearLowStockUnit(unit); // Fall back to hardcoded check
+  }
+}
+function categoryEmoji(cat) {
+  return cat.split(' ')[0];
+}
+
+const qtyDebounce = {};
+async function changeQty(id, delta) {
+  if (qtyDebounce[id]) return;
+  qtyDebounce[id] = true;
+  setTimeout(() => { delete qtyDebounce[id]; }, 600);
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  const newQty = Math.max(0, item.qty + delta);
+  if (newQty === 0) {
+    if (!confirm(`Remove "${item.name}" from pantry?`)) return;
+    try {
+      await deleteItemFromDb(id);
+      items = items.filter(i => i.id !== id);
+      saveItems();
+    } catch(e) { showSyncStatus('Delete failed', 'var(--red)'); }
+    return;
+  }
+  try {
+    const updates = { qty: newQty };
+    // Clear low-stock descriptors when adding quantity
+    if (delta > 0) {
+      const cleanUnit = clearLowStockUnit(item.unit);
+      if (cleanUnit !== item.unit) { updates.unit = cleanUnit; item.unit = cleanUnit; }
+    }
+    await updateItemInDb(id, updates);
+    item.qty = newQty;
+    saveItems();
+    showSyncStatus('Saved ✓', 'var(--green)');
+  } catch(e) { showSyncStatus('Save failed', 'var(--red)'); }
+}
+
+async function deleteItem(id) {
+  const item = items.find(i => i.id === id);
+  if (item && confirm(`Remove "${item.name}"?`)) {
+    try {
+      await deleteItemFromDb(id);
+      items = items.filter(i => i.id !== id);
+      saveItems();
+    } catch(e) { showSyncStatus('Delete failed', 'var(--red)'); }
+  }
+}
+
+function getCategories() {
+  const defaults = ['🥫 Pantry Essentials','🥫 Canned Goods','🫙 Sauces','🍶 Vinegars','🫘 Beans & Legumes','🌾 Grains','🌾 Flour','🍫 Sweets & Baking','🧂 Spices & Seasonings','🧊 Freezer','📦 Other'];
+  const fromItems = [...new Set(items.map(i => i.category).filter(Boolean))];
+  return [...new Set([...fromItems, ...defaults])].sort();
+}
+
+function populateCategorySelect(selectId, currentValue) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  const cats = getCategories();
+  sel.innerHTML = cats.map(c => `<option value="${c}" ${c === currentValue ? 'selected' : ''}>${c}</option>`).join('');
+}
+
+function openModal() {
+  document.getElementById('newName').value = '';
+  document.getElementById('newQty').value = '1';
+  document.getElementById('newUnit').value = '';
+  populateCategorySelect('newCategory', '🥫 Pantry Essentials');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('newName').focus(), 300);
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+}
+
+async function saveItem() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { document.getElementById('newName').focus(); alert('Please enter an item name.'); return; }
+  const qty = parseFloat(document.getElementById('newQty').value);
+  if (isNaN(qty) || qty < 0) { alert('Quantity must be 0 or more.'); return; }
+  if (qty > 9999) { alert('Quantity seems too high — please check.'); return; }
+  const unit = document.getElementById('newUnit').value.trim();
+  const category = document.getElementById('newCategory').value;
+  closeModal();
+  showSyncStatus('Adding…');
+  try {
+    const newItem = await addItemToDb({ name, qty, unit, category });
+    if (newItem) items.push(newItem);
+    saveItems();
+    showSyncStatus('Added ✓', 'var(--green)');
+  } catch(e) {
+    showSyncStatus('Add failed', 'var(--red)');
+    console.error(e);
+  }
+}
+
+
+// ── RECEIPT SCANNER ──
+let receiptParsedItems = [];
+
+async function compressImage(file, maxWidth=1200, quality=0.82) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl.split(',')[1]);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleReceiptUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('receiptImg').src = e.target.result;
+    document.getElementById('receiptPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  document.getElementById('receiptStatus').textContent = 'Compressing image…';
+  document.getElementById('receiptItems').style.display = 'none';
+
+  // Compress image before sending
+  const base64 = await compressImage(file);
+  const mediaType = 'image/jpeg';
+  document.getElementById('receiptStatus').textContent = 'Reading receipt…';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: mediaType, data: base64 }
+            },
+            {
+              type: 'text',
+              text: `This is a grocery receipt for a household pantry tracker. Extract items and categorize them. Skip non-food items entirely (cleaning products, toiletries, paper goods, batteries, pet supplies, alcohol, magazines).
+
+For each food item, decide if it belongs in a pantry:
+- INCLUDE (set _pantry: true): canned goods, grains, pasta, rice, flour, spices, herbs, sauces, condiments, vinegars, oils, frozen items, baking ingredients, dried beans/legumes, shelf-stable drinks, nut butters
+- UNCHECK BY DEFAULT (set _pantry: false, _include: false): fresh meat, fresh fish, fresh produce, fresh fruit, fresh vegetables, dairy, tofu, fresh bread, deli items — UNLESS they are frozen
+
+Return ONLY a JSON array, no other text. Format:
+[{"name":"Item Name","qty":1,"unit":"","category":"🥫 Pantry Essentials","_pantry":true,"_include":true}]
+
+Use these categories:
+- "🥫 Canned Goods" for canned items
+- "🫘 Beans & Legumes" for beans, lentils, legumes
+- "🌾 Grains" for rice, oats, pasta, grains
+- "🌾 Flour" for flour, cornstarch, baking powder
+- "🍫 Sweets & Baking" for chocolate, sugar, baking items
+- "🧂 Spices & Seasonings" for spices, herbs
+- "🫙 Sauces" for sauces, condiments
+- "🍶 Vinegars" for vinegars
+- "🧊 Freezer" for frozen items
+- "🥫 Pantry Essentials" for oils, nut butters, shelf-stable drinks, and everything else pantry-related
+
+Decode abbreviated receipt names into real food names. Return ONLY the JSON array.`
+            }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+
+    // Parse JSON from response
+    const jsonMatch = text.match(/\[.*\]/s);
+    if (!jsonMatch) throw new Error('Could not parse receipt');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    // Sort: pantry items (checked) first, non-pantry (unchecked) last
+    receiptParsedItems = [
+      ...parsed.filter(i => i._include !== false),
+      ...parsed.filter(i => i._include === false)
+    ];
+    showReceiptItems();
+  } catch(e) {
+    document.getElementById('receiptStatus').textContent = 'Could not read receipt. Try a clearer photo.';
+    console.error(e);
+  }
+}
+
+function toggleReceiptCheck(i) {
+  const cb = document.querySelector(`.receipt-check[data-index="${i}"]`);
+  if (cb) cb.checked = !cb.checked;
+}
+
+function updateReceiptItemName(i, val) {
+  receiptParsedItems[i].name = val;
+}
+
+function updateReceiptItemQty(i, val) {
+  receiptParsedItems[i].qty = parseFloat(val) || 1;
+}
+
+function showReceiptItems() {
+  document.getElementById('receiptStatus').textContent = '';
+  document.getElementById('receiptItems').style.display = 'block';
+
+  const pantryItems = receiptParsedItems.filter(i => i._include !== false);
+  const reviewItems = receiptParsedItems.filter(i => i._include === false);
+
+  const renderItem = (item, i) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:white;border-radius:10px;margin-bottom:6px;border:1.5px solid var(--border);">
+      <input type="checkbox" class="receipt-check" data-index="${i}" ${item._include !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--accent);flex-shrink:0;margin-top:3px;" />
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+        <input type="text" value="${item.name}" onchange="updateReceiptItemName(${i}, this.value)"
+          style="font-size:14px;font-weight:500;color:var(--brown);border:none;border-bottom:1px solid var(--border);background:transparent;outline:none;width:100%;padding:0;" />
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="number" value="${item.qty}" min="0.1" step="0.1" onchange="updateReceiptItemQty(${i}, this.value)"
+            style="width:48px;font-size:12px;color:var(--brown-light);border:1px solid var(--border);border-radius:6px;padding:2px 5px;text-align:center;" />
+          <span style="font-size:12px;color:var(--brown-light);">${item.unit || ''} · ${item.category}</span>
+          ${item._duplicate ? '<span style="font-size:11px;color:var(--accent);background:var(--accent-light);padding:2px 6px;border-radius:8px;">already in pantry</span>' : ''}
+        </div>
+      </div>
+    </div>`;
+
+  const list = document.getElementById('receiptItemList');
+  list.innerHTML = 
+    (pantryItems.length ? `<div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--green);padding:6px 2px 4px;">✓ Pantry items (${pantryItems.length})</div>` : '') +
+    pantryItems.map((item) => renderItem(item, receiptParsedItems.indexOf(item))).join('') +
+    (reviewItems.length ? `<div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--brown-light);padding:12px 2px 4px;border-top:1px solid var(--border);margin-top:6px;">⚠ Not typically tracked (${reviewItems.length})</div>` : '') +
+    reviewItems.map((item) => renderItem(item, receiptParsedItems.indexOf(item))).join('');
+}
+
+
+function preConfirmReceipt() {
+  const checked = document.querySelectorAll('.receipt-check:checked');
+  if (checked.length === 0) { alert('No items selected — tap the checkboxes next to items you want to add.'); return; }
+  if (confirm(`Add ${checked.length} item${checked.length !== 1 ? 's' : ''} to your pantry?`)) {
+    confirmReceiptItems();
+  }
+}
+async function fuzzyDuplicateCheck(toAdd) {
+  // Ask Claude to identify duplicates using culinary knowledge
+  try {
+    const pantryNames = items.map(i => i.name).join(', ');
+    const incomingNames = toAdd.map(i => i.name).join(', ');
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: `I have these items in my pantry: ${pantryNames}
+
+I want to add these new items: ${incomingNames}
+
+Which new items are duplicates or near-duplicates of existing pantry items? Use culinary knowledge — "Kikkoman Soy Sauce" matches "Kikkoman Organic Soy Sauce", "sriracha" matches "Sriracha Hot Sauce", etc.
+
+Return ONLY a JSON object mapping new item names to existing item names they match, or empty object if none:
+{"new item name": "existing item name"}`
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '{}';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : {};
+  } catch(e) {
+    console.error('Fuzzy check failed', e);
+    return {};
+  }
+}
+
+async function confirmReceiptItems() {
+  const checkedIndexes = new Set([...document.querySelectorAll('.receipt-check:checked')].map(el => parseInt(el.dataset.index)));
+  const toAdd = receiptParsedItems.filter((_, i) => checkedIndexes.has(i));
+
+  document.getElementById('receiptItems').style.display = 'none';
+  document.getElementById('receiptProgressWrap').style.display = 'block';
+  document.getElementById('receiptProgressFill').style.width = '0%';
+  document.getElementById('receiptStatus').textContent = 'Checking for duplicates…';
+
+  await loadItems();
+
+  // Fuzzy duplicate check via Claude
+  const duplicateMap = await fuzzyDuplicateCheck(toAdd);
+  document.getElementById('receiptProgressFill').style.width = '10%';
+
+  let added = 0, updated = 0;
+  for (let i = 0; i < toAdd.length; i++) {
+    const item = toAdd[i];
+    const pct = 10 + Math.round((i / toAdd.length) * 88);
+    document.getElementById('receiptProgressFill').style.width = pct + '%';
+    document.getElementById('receiptStatus').textContent = `Adding ${i + 1} of ${toAdd.length}…`;
+    try {
+      // Check fuzzy duplicate map first, then fall back to exact match
+      const matchedName = duplicateMap[item.name];
+      const existing = matchedName
+        ? items.find(i => i.name.toLowerCase() === matchedName.toLowerCase())
+        : items.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+      if (existing) {
+        const newQty = (existing.qty || 0) + (item.qty || 1);
+        const validatedUnit = await validateUnit(existing.name, newQty, existing.unit);
+        await updateItemInDb(existing.id, { qty: newQty, unit: validatedUnit });
+        existing.qty = newQty;
+        existing.unit = validatedUnit;
+        updated++;
+      } else {
+        // Final duplicate gate after any name edits
+        const finalExisting = items.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+        if (finalExisting) {
+          const newQty = (finalExisting.qty || 0) + (item.qty || 1);
+          const validatedUnit = await validateUnit(finalExisting.name, newQty, finalExisting.unit);
+          await updateItemInDb(finalExisting.id, { qty: newQty, unit: validatedUnit });
+          finalExisting.qty = newQty;
+          finalExisting.unit = validatedUnit;
+          updated++;
+        } else {
+          const validatedUnit = await validateUnit(item.name, item.qty, item.unit);
+          const newItem = await addItemToDb({ ...item, unit: validatedUnit });
+          if (newItem) { items.push(newItem); added++; }
+        }
+      }
+    } catch(e) { console.error('Failed to add', item.name, e); }
+  }
+
+  document.getElementById('receiptProgressFill').style.width = '100%';
+  updateCount();
+  renderInventory();
+  const msg = [added && `${added} added`, updated && `${updated} updated`].filter(Boolean).join(', ');
+  document.getElementById('receiptStatus').textContent = `✓ ${msg}! (Tap 📋 to review what was added)`;
+  setTimeout(() => { document.getElementById('receiptProgressWrap').style.display = 'none'; }, 1500);
+  // Save receipt log to localStorage
+  const log = { date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), added: toAdd.map(i => i.name), counts: { added, updated } };
+  const logs = JSON.parse(localStorage.getItem('pantry_receipt_logs') || '[]');
+  logs.unshift(log);
+  localStorage.setItem('pantry_receipt_logs', JSON.stringify(logs.slice(0, 10))); // keep last 10
+  document.getElementById('receiptPreview').style.display = 'none';
+  document.getElementById('receiptInput').value = '';
+  receiptParsedItems = [];
+  showReceiptLog();
+}
+
+function showReceiptLog() {
+  const logs = JSON.parse(localStorage.getItem('pantry_receipt_logs') || '[]');
+  const logDiv = document.getElementById('receiptLog');
+  if (!logDiv) return;
+  if (logs.length === 0) { logDiv.style.display = 'none'; return; }
+  logDiv.style.display = 'block';
+  logDiv.innerHTML = '<div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--brown-light);margin-bottom:8px;">📋 Recent imports</div>' +
+    logs.map(log => `
+      <div style="background:white;border-radius:10px;padding:10px 12px;margin-bottom:6px;border:1px solid var(--border);font-size:12px;color:var(--brown-light);">
+        <strong style="color:var(--brown)">${log.date}</strong> — ${log.counts.added} added, ${log.counts.updated} updated<br>
+        <span style="opacity:0.8">${log.added.join(', ')}</span>
+      </div>`).join('');
+}
+
+function cancelReceipt() {
+  document.getElementById('receiptItems').style.display = 'none';
+  document.getElementById('receiptPreview').style.display = 'none';
+  document.getElementById('receiptStatus').textContent = '';
+  document.getElementById('receiptInput').value = '';
+  receiptParsedItems = [];
+}
+
+
+function openEditModal(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('editId').value = id;
+  document.getElementById('editName').value = item.name;
+  document.getElementById('editQty').value = item.qty;
+  document.getElementById('editUnit').value = item.unit || '';
+  populateCategorySelect('editCategory', item.category);
+  document.getElementById('editModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('editName').focus(), 300);
+}
+
+function closeEditModal(e) {
+  if (!e || e.target === document.getElementById('editModalOverlay')) {
+    document.getElementById('editModalOverlay').classList.remove('open');
+  }
+}
+
+async function saveEdit() {
+  const id = parseInt(document.getElementById('editId').value);
+  const name = document.getElementById('editName').value.trim();
+  if (!name) { document.getElementById('editName').focus(); alert('Please enter an item name.'); return; }
+  const qty = parseFloat(document.getElementById('editQty').value);
+  if (isNaN(qty) || qty < 0) { alert('Quantity must be 0 or more.'); return; }
+  if (qty > 9999) { alert('Quantity seems too high — please check.'); return; }
+  const unit = document.getElementById('editUnit').value.trim();
+  const category = document.getElementById('editCategory').value;
+  closeEditModal();
+  showSyncStatus('Saving…');
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/Pantry?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=representation' },
+      body: JSON.stringify({ name, qty, unit, category })
+    });
+    const item = items.find(i => i.id === id);
+    if (item) { item.name = name; item.qty = qty; item.unit = unit; item.category = category; }
+    saveItems();
+    showSyncStatus('Saved ✓', 'var(--green)');
+  } catch(e) {
+    showSyncStatus('Save failed', 'var(--red)');
+    console.error(e);
+  }
+}
+
+function checkApiKey() {
+  if (!ANTHROPIC_KEY) {
+    document.getElementById('keyModalOverlay').classList.add('open');
+  }
+}
+
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-ant-')) { alert('That doesn\'t look like a valid API key — it should start with sk-ant-'); return; }
+  ANTHROPIC_KEY = key;
+  localStorage.setItem('pantry_anthropic_key', key);
+  document.getElementById('keyModalOverlay').classList.remove('open');
+}
+
+function closeKeyModal() {
+  document.getElementById('keyModalOverlay').classList.remove('open');
+}
+
+
+async function verifyAllItems() {
+  const unstamped = items.filter(i => !i.last_updated);
+  if (unstamped.length === 0) { alert('All items already have timestamps!'); return; }
+  if (!confirm(`Stamp ${unstamped.length} items that have no date yet with today's date? Items with existing timestamps won't be changed.`)) return;
+  showSyncStatus('Verifying…');
+  const now = new Date().toISOString();
+  try {
+    // Only update rows where last_updated is null
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/Pantry?last_updated=is.null`, {
+      method: 'PATCH',
+      headers: { ...SB_HEADERS, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ last_updated: now })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    unstamped.forEach(i => i.last_updated = now);
+    saveItems();
+    showSyncStatus('Verified ✓', 'var(--green)');
+  } catch(e) {
+    showSyncStatus('Verify failed', 'var(--red)');
+    console.error(e);
+  }
+}
+const APP_VERSION = '1.1';
+function checkVersion() {
+  const stored = localStorage.getItem('pantry_version');
+  if (stored && stored !== APP_VERSION) {
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:var(--accent);color:white;text-align:center;padding:10px;font-size:13px;z-index:999;cursor:pointer;';
+    banner.textContent = '✨ A new version is available — tap to refresh';
+    banner.onclick = () => { localStorage.setItem('pantry_version', APP_VERSION); location.reload(); };
+    document.body.prepend(banner);
+  } else {
+    localStorage.setItem('pantry_version', APP_VERSION);
+  }
+}
+loadItems();
+checkApiKey();
+showReceiptLog();
+checkVersion();
+</script>
+</body>
+</html>
